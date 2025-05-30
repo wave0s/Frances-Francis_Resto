@@ -1,9 +1,7 @@
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.*;
 
 public class RestaurantDashboard extends JFrame {
     private static final int NUM_TABLES = 10;
@@ -37,7 +35,7 @@ public class RestaurantDashboard extends JFrame {
         headerPanel.setBackground(new Color(45, 45, 45));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("Frances & Francis Resto Bar", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Frances & Francis Resto", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
 
@@ -60,7 +58,7 @@ public class RestaurantDashboard extends JFrame {
         mainPanel.setBackground(new Color(215, 201, 174));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel sectionTitle = new JLabel("Overview");
+        JLabel sectionTitle = new JLabel("Table Selection");
         sectionTitle.setFont(new Font("Arial", Font.BOLD, 18));
         sectionTitle.setForeground(new Color(52, 73, 94));
         sectionTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
@@ -69,7 +67,7 @@ public class RestaurantDashboard extends JFrame {
         gridPanel.setBackground(new Color(215, 201, 174));
 
         for (int i = 1; i <= NUM_TABLES; i++) {
-            TablePanel tablePanel = new TablePanel(i);
+            TablePanel tablePanel = new TablePanel(i, this);
             tables.put(i, tablePanel);
             gridPanel.add(tablePanel);
         }
@@ -111,7 +109,16 @@ public class RestaurantDashboard extends JFrame {
         return footerPanel;
     }
 
-    private void updateStats() {
+
+        public static void launchDashboard() {
+            SwingUtilities.invokeLater(() -> {
+                RestaurantDashboard dashboard = new RestaurantDashboard();
+                dashboard.setVisible(true);
+            });
+        }
+
+
+    public void updateStats() {
         int occupiedCount = 0;
         for (TablePanel table : tables.values()) {
             if (table.isOccupied()) {
@@ -124,118 +131,12 @@ public class RestaurantDashboard extends JFrame {
                 occupiedCount, availableCount, NUM_TABLES));
     }
 
-    private class TablePanel extends JPanel {
-        private int tableNumber;
-        private boolean occupied;
-        private JLabel tableLabel;
-        private JLabel statusLabel;
-        private JButton toggleButton;
-
-        private final int ARC_WIDTH = 30;
-        private final int ARC_HEIGHT = 30;
-
-        public TablePanel(int tableNumber) {
-            this.tableNumber = tableNumber;
-            this.occupied = false;
-
-            setLayout(new BorderLayout());
-            setPreferredSize(new Dimension(140, 120));
-            setOpaque(false);
-
-            createComponents();
-            updateAppearance();
-        }
-
-        private void createComponents() {
-            tableLabel = new JLabel("Table " + tableNumber, SwingConstants.CENTER);
-            tableLabel.setFont(new Font("Arial", Font.BOLD, 16));
-            tableLabel.setBorder(BorderFactory.createEmptyBorder(10, 5, 5, 5));
-
-            statusLabel = new JLabel("", SwingConstants.CENTER);
-            statusLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-
-            toggleButton = new JButton();
-            toggleButton.setFont(new Font("Arial", Font.BOLD, 10));
-            toggleButton.setFocusPainted(false);
-            toggleButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-            toggleButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    toggleOccupancy();
-                }
-            });
-
-            JPanel centerPanel = new JPanel(new BorderLayout());
-            centerPanel.setOpaque(false);
-            centerPanel.add(statusLabel, BorderLayout.CENTER);
-            centerPanel.add(toggleButton, BorderLayout.SOUTH);
-
-            add(tableLabel, BorderLayout.NORTH);
-            add(centerPanel, BorderLayout.CENTER);
-        }
-
-        private void toggleOccupancy() {
-            occupied = !occupied;
-            updateAppearance();
-            updateStats();
-        }
-
-        private void updateAppearance() {
-            if (occupied) {
-                setBackground(new Color(234, 224, 210));
-                tableLabel.setForeground(Color.BLACK);
-                statusLabel.setText("OCCUPIED");
-                statusLabel.setForeground(Color.BLACK);
-                toggleButton.setText("Free Table");
-                toggleButton.setBackground(new Color(46, 204, 113));
-                toggleButton.setForeground(Color.BLACK);
-            } else {
-                setBackground(new Color(234, 224, 210));
-                tableLabel.setForeground(Color.BLACK);
-                statusLabel.setText("AVAILABLE");
-                statusLabel.setForeground(Color.BLACK);
-                toggleButton.setText("Occupy Table");
-                toggleButton.setBackground(new Color(231, 76, 60));
-                toggleButton.setForeground(Color.BLACK);
-            }
-
-            tableLabel.setOpaque(false);
-            statusLabel.setOpaque(false);
-            setOpaque(true);
-            repaint();
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), ARC_WIDTH, ARC_HEIGHT);
-            g2.dispose();
-        }
-
-        public boolean isOccupied() {
-            return occupied;
-        }
-
-        public int getTableNumber() {
-            return tableNumber;
-        }
-    }
-
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new RestaurantDashboard().setVisible(true);
-            }
-        });
+        SwingUtilities.invokeLater(() -> new RestaurantDashboard().setVisible(true));
     }
 }
-
