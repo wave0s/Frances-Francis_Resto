@@ -62,17 +62,33 @@ public class EditOrder extends JFrame {
         orderDetails.setBackground(new Color(234, 224, 210));
         orderDetails.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        orderDetails.setText("Current Order for Table " + tablePanel.getTableNumber() + ":\n\n" +
-                           "• Classic Burger x2 - Php 179.98\n" +
-                           "• Caesar Salad x1 - Php 199.99\n" +
-                           "• Coffee x2 - Php 339.98\n\n" +
-                           "Subtotal: Php 719.95\n" +
-                           "Tax: Php 57.60\n" +
-                           "Total: Php 777.55\n\n" +
-                           "Order Status: In Progress\n" +
-                           "Order Time: 2:30 PM\n\n" +
-                           "Special Instructions:\n" +
-                           "Extra sauce on burger, no croutons on salad");
+        // Get actual order data from OrderManager
+        Order order = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
+        StringBuilder orderText = new StringBuilder();
+        
+        if (order != null) {
+            orderText.append("Current Order for Table ").append(tablePanel.getTableNumber()).append(":\n\n");
+            
+            // Display each item in the order
+            for (Order.OrderItem item : order.getItems()) {
+                orderText.append("• ").append(item.getName())
+                         .append(" x").append(item.getQuantity())
+                         .append(" - Php ").append(String.format("%.2f", item.getPrice() * item.getQuantity()))
+                         .append("\n");
+            }
+            
+            orderText.append("\nSubtotal: Php ").append(String.format("%.2f", order.getSubtotal()));
+            orderText.append("\nTax (8%): Php ").append(String.format("%.2f", order.getTax()));
+            orderText.append("\nTotal: Php ").append(String.format("%.2f", order.getTotal()));
+            orderText.append("\n\nOrder Status: ").append(order.getStatus());
+            orderText.append("\nOrder Time: ").append(order.getOrderTime());
+        } else {
+            orderText.append("No order found for Table ").append(tablePanel.getTableNumber()).append(".\n\n");
+            orderText.append("This table appears to be occupied but no order data is available.");
+        }
+
+        orderDetails.setText(orderText.toString());
+        orderDetails.setEditable(false);
 
         JScrollPane scrollPane = new JScrollPane(orderDetails);
         scrollPane.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -100,7 +116,6 @@ public class EditOrder extends JFrame {
         cancelBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
         cancelBtn.addActionListener(e -> {
             dispose();
-
             SwingUtilities.invokeLater(() -> {
                 RestaurantDashboard newDashboard = new RestaurantDashboard();
                 newDashboard.setVisible(true);
@@ -143,8 +158,7 @@ public class EditOrder extends JFrame {
 
     private void confirmOrder() {
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to complete this order?\n" +
-                "This will mark the table as available and close the order.",
+                "Are you sure you want to complete this order?\n",
                 "Confirm Order Completion",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
@@ -157,7 +171,7 @@ public class EditOrder extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
             
             tablePanel.setOccupied(false);
-            
+            OrderManager.getInstance().removeOrder(tablePanel.getTableNumber());
 
             dispose();
             

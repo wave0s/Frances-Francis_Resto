@@ -73,6 +73,8 @@ public class TablePanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             occupied = false;
+            // Remove the order from OrderManager when canceling
+            OrderManager.getInstance().removeOrder(tableNumber);
             updateAppearance();
             parentDashboard.updateStats();
         }

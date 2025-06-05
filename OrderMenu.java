@@ -83,7 +83,7 @@ public class OrderMenu extends JFrame {
         String[][] menuItems = {
             {"Classic Burger", "89.99"},
             {"Caesar Salad", "199.99"},
-            {"Margherita Pizza", "299.99"},
+            {"Pizza", "299.99"},
             {"Fish & Chips", "169.99"},
             {"Chocolate Cake", "369.99"},
             {"Coffee", "169.99"}
@@ -328,9 +328,7 @@ public class OrderMenu extends JFrame {
         backBtn.setFocusPainted(false);
         backBtn.setBorder(new EmptyBorder(8, 20, 8, 20));
         backBtn.addActionListener(e -> {
-
             dispose();
-        
             SwingUtilities.invokeLater(() -> {
                 RestaurantDashboard newDashboard = new RestaurantDashboard();
                 newDashboard.setVisible(true);
@@ -345,6 +343,16 @@ public class OrderMenu extends JFrame {
         placeOrderBtn.setBorder(new EmptyBorder(8, 20, 8, 20));
         placeOrderBtn.addActionListener(e -> {
             if (!orderItems.isEmpty()) {
+                
+                OrderManager.getInstance().createOrder(tablePanel.getTableNumber());
+                Order order = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
+                
+                for (Map.Entry<String, OrderItem> entry : orderItems.entrySet()) {
+                    OrderItem item = entry.getValue();
+                    order.addItem(item.name, item.price, item.quantity);
+                }
+                order.calculateTotals();
+                
                 tablePanel.setOccupied(true);
                 
                 dispose();
