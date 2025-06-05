@@ -30,6 +30,13 @@ public class RestaurantDashboard extends JFrame {
         updateStats();
     }
 
+    public void updateTableState(int tableNumber, boolean occupied) {
+        if (tables.containsKey(tableNumber)) {
+            tables.get(tableNumber).setOccupied(occupied);
+            updateStats();
+        }
+    }
+
     private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(45, 45, 45));
@@ -109,14 +116,12 @@ public class RestaurantDashboard extends JFrame {
         return footerPanel;
     }
 
-
-        public static void launchDashboard() {
-            SwingUtilities.invokeLater(() -> {
-                RestaurantDashboard dashboard = new RestaurantDashboard();
-                dashboard.setVisible(true);
-            });
-        }
-
+    public static void launchDashboard() {
+        SwingUtilities.invokeLater(() -> {
+            RestaurantDashboard dashboard = new RestaurantDashboard();
+            dashboard.setVisible(true);
+        });
+    }
 
     public void updateStats() {
         int occupiedCount = 0;
@@ -132,11 +137,11 @@ public class RestaurantDashboard extends JFrame {
     }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        SwingUtilities.invokeLater(() -> new RestaurantDashboard().setVisible(true));
+    try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+    SwingUtilities.invokeLater(() -> new RestaurantDashboard().setVisible(true));
+}
 }

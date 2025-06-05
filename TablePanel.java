@@ -10,7 +10,6 @@ public class TablePanel extends JPanel {
     private JButton cancelButton;
     private RestaurantDashboard parentDashboard;
 
-
     public TablePanel(int tableNumber, RestaurantDashboard parent) {
         this.tableNumber = tableNumber;
         this.occupied = false;
@@ -107,15 +106,25 @@ public class TablePanel extends JPanel {
     }
 
     private void showOrderMenu() {
-        OrderMenu orderMenu = new OrderMenu(this, parentDashboard);
-        orderMenu.isVisible();
+        Window parentWindow = SwingUtilities.getWindowAncestor(this);
         
+        OrderMenu orderMenu = new OrderMenu(this, parentDashboard);
         orderMenu.setVisible(true);
+
+        if (parentWindow != null) {
+            parentWindow.dispose();
+        }
     }
 
     private void showEditOrder() {
+        Window parentWindow = SwingUtilities.getWindowAncestor(this);
+        
         EditOrder editOrder = new EditOrder(this);
         editOrder.setVisible(true);
+        
+        if (parentWindow != null) {
+            parentWindow.dispose();
+        }
     }
 
     public boolean isOccupied() {
@@ -125,14 +134,13 @@ public class TablePanel extends JPanel {
     public int getTableNumber() {
         return tableNumber;
     }
+    
     public RestaurantDashboard getParentDashboard() {
-    return parentDashboard;
-}
+        return parentDashboard;
+    }
 
     public void setOccupied(boolean occupied) {
         this.occupied = occupied;
         updateAppearance();
     }
-
-    
 }

@@ -13,7 +13,6 @@ public class OrderMenu extends JFrame {
     private Map<String, OrderItem> orderItems;
     private JScrollPane orderScrollPane;
 
-
     private class OrderItem {
         String name;
         double price;
@@ -38,7 +37,6 @@ public class OrderMenu extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-    
         getContentPane().setBackground(new Color(215, 201, 174));
 
         createHeaderPanel();
@@ -78,6 +76,7 @@ public class OrderMenu extends JFrame {
         sectionTitle.setFont(new Font("Arial", Font.BOLD, 18));
         sectionTitle.setForeground(new Color(52, 73, 94));
         sectionTitle.setBorder(new EmptyBorder(0, 0, 15, 0));
+        
         JPanel menuGridPanel = new JPanel(new GridLayout(2, 3, 15, 15));
         menuGridPanel.setBackground(new Color(215, 201, 174));
 
@@ -94,6 +93,7 @@ public class OrderMenu extends JFrame {
             JPanel menuItemPanel = createMenuItemPanel(item[0], Double.parseDouble(item[1]));
             menuGridPanel.add(menuItemPanel);
         }
+        
         JPanel orderSection = createOrderSection();
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -124,11 +124,9 @@ public class OrderMenu extends JFrame {
         nameLabel.setForeground(Color.BLACK);
         nameLabel.setBorder(new EmptyBorder(10, 5, 5, 5));
 
-
         JLabel priceLabel = new JLabel("Php" + String.format("%.2f", price), SwingConstants.CENTER);
         priceLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         priceLabel.setForeground(Color.BLACK);
-
 
         JButton addButton = new JButton("Add Item");
         addButton.setFont(new Font("Arial", Font.BOLD, 10));
@@ -164,7 +162,6 @@ public class OrderMenu extends JFrame {
         orderTitle.setForeground(new Color(52, 73, 94));
         orderTitle.setBorder(new EmptyBorder(0, 0, 15, 0));
 
-
         orderItemsPanel = new JPanel();
         orderItemsPanel.setLayout(new BoxLayout(orderItemsPanel, BoxLayout.Y_AXIS));
         orderItemsPanel.setBackground(new Color(215, 201, 174));
@@ -181,7 +178,7 @@ public class OrderMenu extends JFrame {
         orderScrollPane.setBorder(BorderFactory.createLoweredBevelBorder());
         orderScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-        totalLabel = new JLabel("Total: Php0.00", SwingConstants.CENTER);
+        totalLabel = new JLabel("Total: Php 0.00", SwingConstants.CENTER);
         totalLabel.setFont(new Font("Arial", Font.BOLD, 16));
         totalLabel.setForeground(new Color(52, 73, 94));
         totalLabel.setBorder(new EmptyBorder(10, 0, 0, 0));
@@ -195,12 +192,10 @@ public class OrderMenu extends JFrame {
 
     private void addToOrder(String itemName, double price) {
         if (orderItems.containsKey(itemName)) {
-
             OrderItem item = orderItems.get(itemName);
             item.quantity++;
             updateOrderItemDisplay(item);
         } else {
-
             OrderItem newItem = new OrderItem(itemName, price);
             orderItems.put(itemName, newItem);
             
@@ -229,7 +224,6 @@ public class OrderMenu extends JFrame {
         updateItemLabel(itemLabel, item);
         itemLabel.setFont(new Font("Arial", Font.BOLD, 12));
         itemLabel.setForeground(new Color(52, 73, 94));
-
 
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
         controlPanel.setBackground(new Color(234, 224, 210));
@@ -334,10 +328,13 @@ public class OrderMenu extends JFrame {
         backBtn.setFocusPainted(false);
         backBtn.setBorder(new EmptyBorder(8, 20, 8, 20));
         backBtn.addActionListener(e -> {
-            dispose(); 
-            if (dashboard != null) {
-                RestaurantDashboard.launchDashboard();
-            }
+
+            dispose();
+        
+            SwingUtilities.invokeLater(() -> {
+                RestaurantDashboard newDashboard = new RestaurantDashboard();
+                newDashboard.setVisible(true);
+            });
         });
 
         JButton placeOrderBtn = new JButton("Place Order");
@@ -349,10 +346,13 @@ public class OrderMenu extends JFrame {
         placeOrderBtn.addActionListener(e -> {
             if (!orderItems.isEmpty()) {
                 tablePanel.setOccupied(true);
-                if (dashboard != null) {
-                    dashboard.updateStats();
-                }
-                dispose(); 
+                
+                dispose();
+                SwingUtilities.invokeLater(() -> {
+                    RestaurantDashboard newDashboard = new RestaurantDashboard();
+                    newDashboard.updateTableState(tablePanel.getTableNumber(), true);
+                    newDashboard.setVisible(true);
+                });
             } else {
                 JOptionPane.showMessageDialog(this, 
                     "Please add items to your order before placing it.", 
@@ -371,7 +371,6 @@ public class OrderMenu extends JFrame {
             orderItems.clear();
             orderItemsPanel.removeAll();
             
-
             JLabel emptyLabel = new JLabel("Nothing to see here :(", SwingConstants.CENTER);
             emptyLabel.setFont(new Font("Arial", Font.PLAIN, 14));
             emptyLabel.setForeground(Color.GRAY);

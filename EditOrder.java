@@ -54,6 +54,7 @@ public class EditOrder extends JFrame {
         sectionTitle.setFont(new Font("Arial", Font.BOLD, 18));
         sectionTitle.setForeground(new Color(52, 73, 94));
         sectionTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+        
         JTextArea orderDetails = new JTextArea();
         orderDetails.setLineWrap(true);
         orderDetails.setWrapStyleWord(true);
@@ -99,6 +100,11 @@ public class EditOrder extends JFrame {
         cancelBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
         cancelBtn.addActionListener(e -> {
             dispose();
+
+            SwingUtilities.invokeLater(() -> {
+                RestaurantDashboard newDashboard = new RestaurantDashboard();
+                newDashboard.setVisible(true);
+            });
         });
 
         JButton saveBtn = new JButton("Save Changes");
@@ -113,6 +119,10 @@ public class EditOrder extends JFrame {
                 "Changes Saved", 
                 JOptionPane.INFORMATION_MESSAGE);
             dispose();
+            SwingUtilities.invokeLater(() -> {
+                RestaurantDashboard newDashboard = new RestaurantDashboard();
+                newDashboard.setVisible(true);
+            });
         });
 
         JButton confirmBtn = new JButton("Confirm & Complete Order");
@@ -145,13 +155,17 @@ public class EditOrder extends JFrame {
                 "Table " + tablePanel.getTableNumber() + " is now available.",
                 "Order Completed",
                 JOptionPane.INFORMATION_MESSAGE);
+            
             tablePanel.setOccupied(false);
             
-            if (parentDashboard != null) {
-                parentDashboard.updateStats();
-            }
 
             dispose();
+            
+            SwingUtilities.invokeLater(() -> {
+                RestaurantDashboard newDashboard = new RestaurantDashboard();
+                newDashboard.updateTableState(tablePanel.getTableNumber(), false);
+                newDashboard.setVisible(true);
+            });
         }
     }
 }
