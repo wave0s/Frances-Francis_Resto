@@ -1,30 +1,43 @@
 import java.awt.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.*;
 
-public class RestaurantDashboard extends JFrame {
+public class RestaurantDashboard extends JFrame implements RestaurantFrame {
     private static final int NUM_TABLES = 10;
     private Map<Integer, TablePanel> tables;
+    private JPanel tablePanel;
     private JLabel statusLabel;
-    private JLabel occupiedCountLabel;
+    private static RestaurantDashboard instance;
+
+    public static RestaurantDashboard getInstance() {
+        if (instance == null) {
+            instance = new RestaurantDashboard();
+        }
+        return instance;
+    }
 
     public RestaurantDashboard() {
-        setTitle("Frances & Francis");
+        setTitle("Frances & Francis - Restaurant Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        setExtendedState(JFrame.MAXIMIZED_BOTH); 
 
         tables = new HashMap<>();
         JPanel headerPanel = createHeaderPanel();
         add(headerPanel, BorderLayout.NORTH);
 
-        JPanel tablesPanel = createTablesPanel();
-        add(tablesPanel, BorderLayout.CENTER);
+        
+        tablePanel = new JPanel(new GridLayout(2, 5, 15, 15));
+        tablePanel.setBackground(new Color(215, 201, 174));
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        add(tablePanel, BorderLayout.CENTER); 
 
         JPanel footerPanel = createFooterPanel();
         add(footerPanel, BorderLayout.SOUTH);
+        loadTables();
 
-        setSize(800, 600);
         setLocationRelativeTo(null);
         setResizable(true);
         updateStats();
@@ -42,7 +55,7 @@ public class RestaurantDashboard extends JFrame {
         headerPanel.setBackground(new Color(45, 45, 45));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("Frances & Francis Resto", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Frances & Francis - Table Management", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
 
@@ -59,61 +72,65 @@ public class RestaurantDashboard extends JFrame {
 
         return headerPanel;
     }
-
-    private JPanel createTablesPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(215, 201, 174));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel sectionTitle = new JLabel("Table Selection");
-        sectionTitle.setFont(new Font("Arial", Font.BOLD, 18));
-        sectionTitle.setForeground(new Color(52, 73, 94));
-        sectionTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-
-        JPanel gridPanel = new JPanel(new GridLayout(2, 5, 15, 15));
-        gridPanel.setBackground(new Color(215, 201, 174));
-
-        for (int i = 1; i <= NUM_TABLES; i++) {
-            TablePanel tablePanel = new TablePanel(i, this);
-            tables.put(i, tablePanel);
-            gridPanel.add(tablePanel);
-        }
-
-        mainPanel.add(sectionTitle, BorderLayout.NORTH);
-        mainPanel.add(gridPanel, BorderLayout.CENTER);
-
-        return mainPanel;
-    }
-
+   
     private JPanel createFooterPanel() {
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(166, 135, 99));
         footerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        occupiedCountLabel = new JLabel();
-        occupiedCountLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        occupiedCountLabel.setForeground(new Color(52, 73, 94));
-
-        JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(52, 152, 219));
-        refreshButton.setForeground(Color.BLACK);
-        refreshButton.setFont(new Font("Arial", Font.BOLD, 12));
-        refreshButton.setFocusPainted(false);
-        refreshButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        refreshButton.addActionListener(e -> updateStats());
-
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        leftPanel.setBackground(new Color(166, 135, 99));
-        leftPanel.add(occupiedCountLabel);
+        JButton backToHomeButton = new JButton("Back to Home");
+        backToHomeButton.setBackground(new Color(52, 152, 219));
+        backToHomeButton.setForeground(Color.BLACK);
+        backToHomeButton.setFont(new Font("Arial", Font.BOLD, 12));
+        backToHomeButton.setFocusPainted(false);
+        backToHomeButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        backToHomeButton.addActionListener(e -> {
+            this.setVisible(false);
+            RestaurantHomePage.getInstance().setVisible(true);
+        });
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setBackground(new Color(166, 135, 99));
-        rightPanel.add(refreshButton);
+        rightPanel.add(backToHomeButton);
 
-        footerPanel.add(leftPanel, BorderLayout.WEST);
         footerPanel.add(rightPanel, BorderLayout.EAST);
 
         return footerPanel;
+    }
+
+    public void loadTables() {
+        tablePanel.removeAll();
+        tables.clear();
+
+        try {
+            Database.initializeDatabase();
+        
+            // Synchronize table states with active orders
+            Database.synchronizeTableStates();
+        
+            List<TablePanel> loadedTables = TablePanel.loadFromDatabase(this);
+            for (TablePanel t : loadedTables) {
+                tables.put(t.getTableNumber(), t);
+                tablePanel.add(t);
+            }
+        
+            System.out.println("Loaded " + loadedTables.size() + " tables from database");
+        
+        } catch (Exception e) {
+            System.err.println("Error loading tables: " + e.getMessage());
+            e.printStackTrace();
+            // Create default tables if there's an error
+            for (int i = 1; i <= NUM_TABLES; i++) {
+                TablePanel table = new TablePanel(i, this);
+                tables.put(i, table);
+                tablePanel.add(table);
+            }
+            System.out.println("Created default tables due to database error");
+        }
+
+        tablePanel.revalidate();
+        tablePanel.repaint();
+        
     }
 
     public static void launchDashboard() {
@@ -132,16 +149,25 @@ public class RestaurantDashboard extends JFrame {
         }
 
         int availableCount = NUM_TABLES - occupiedCount;
-        occupiedCountLabel.setText(String.format("Tables: %d Occupied | %d Available | %d Total",
-                occupiedCount, availableCount, NUM_TABLES));
+        
     }
 
     public static void main(String[] args) {
-    try {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    } catch (Exception e) {
-        e.printStackTrace();
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        SwingUtilities.invokeLater(() -> {
+            RestaurantDashboard dashboard = getInstance();
+            dashboard.setVisible(true);
+        });
     }
-    SwingUtilities.invokeLater(() -> new RestaurantDashboard().setVisible(true));
-}
+
+    public static void showDashboard() {
+        SwingUtilities.invokeLater(() -> {
+            RestaurantDashboard dashboard = getInstance();
+            dashboard.setVisible(true);
+        });
+    }
 }

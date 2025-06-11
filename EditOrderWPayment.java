@@ -79,14 +79,12 @@ public class EditOrderWPayment extends JFrame {
         orderDetails.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 
-        // Get actual order data from OrderManager
         order = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
         StringBuilder orderText = new StringBuilder();
        
         if (order != null) {
             orderText.append("Current Order for Table ").append(tablePanel.getTableNumber()).append(":\n\n");
            
-            // Display each item in the order
             for (Order.OrderItem item : order.getItems()) {
                 orderText.append("• ").append(item.getName())
                          .append(" x").append(item.getQuantity())
@@ -94,8 +92,8 @@ public class EditOrderWPayment extends JFrame {
                          .append("\n");
             }
            
-            orderText.append("\nSubtotal: Php ").append(String.format("%.2f", order.getSubtotal()));
-            orderText.append("\nTax (8%): Php ").append(String.format("%.2f", order.getTax()));
+            orderText.append("\nSubtotal: Php ").append(String.format("%.2f", order.getSubtotal())); 
+            orderText.append("\nTax (12%): Php ").append(String.format("%.2f", order.getTax()));
             orderText.append("\nTotal: Php ").append(String.format("%.2f", order.getTotal()));
             orderText.append("\n\nOrder Status: ").append(order.getStatus());
             orderText.append("\nOrder Time: ").append(order.getOrderTime());
@@ -186,10 +184,7 @@ public class EditOrderWPayment extends JFrame {
         cancelBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
         cancelBtn.addActionListener(e -> {
             dispose();
-            SwingUtilities.invokeLater(() -> {
-                RestaurantDashboard newDashboard = new RestaurantDashboard();
-                newDashboard.setVisible(true);
-            });
+            RestaurantDashboard.showDashboard();
         });
 
 
@@ -215,48 +210,47 @@ public class EditOrderWPayment extends JFrame {
 
 
     private void confirmOrder(JTextField paymentField, Order order, JLabel change) {
-           try{
-                double userPayment = Double.parseDouble(paymentField.getText());
-                double totalAmount = order.getTotal();
-                if (userPayment < totalAmount){
-                    JOptionPane.showMessageDialog(this,
-                        "Insufficient Payment Amount. Please pay again.",
-                        "Insufficient Amount.",
-                        JOptionPane.WARNING_MESSAGE);
-                        paymentField.setText("");
-                        return;
-                } else if(userPayment >= totalAmount){
-                    double userChange = userPayment - totalAmount;
-                    change.setText(String.format("Change: P %.2f", userChange));
-                }
-            } catch(NumberFormatException nfe){
-                JOptionPane.showMessageDialog(this,
-                    "Input input. Please pay again.",
-                    "Invalid Input.",
-                    JOptionPane.WARNING_MESSAGE);
-                    paymentField.setText("");
-                    return;
-            }
-
-
+    try{
+        double userPayment = Double.parseDouble(paymentField.getText());
+        double totalAmount = order.getTotal();
+        if (userPayment < totalAmount){
             JOptionPane.showMessageDialog(this,
-                "Order completed successfully!\n" +
-                "Table " + tablePanel.getTableNumber() + " is now available.",
-                "Order Completed",
-                JOptionPane.INFORMATION_MESSAGE);
-           
-            tablePanel.setOccupied(false);
-            OrderManager.getInstance().removeOrder(tablePanel.getTableNumber());
-
-
-            dispose();
-           
-            SwingUtilities.invokeLater(() -> {
-                RestaurantDashboard newDashboard = new RestaurantDashboard();
-                newDashboard.updateTableState(tablePanel.getTableNumber(), false);
-                newDashboard.setVisible(true);
-            });
-       
+                "Insufficient Payment Amount. Please pay again.",
+                "Insufficient Amount.",
+                JOptionPane.WARNING_MESSAGE);
+                paymentField.setText("");
+                return;
+        } else if(userPayment >= totalAmount){
+            double userChange = userPayment - totalAmount;
+            change.setText(String.format("Change: P %.2f", userChange));
+        }
+    } catch(NumberFormatException nfe){
+        JOptionPane.showMessageDialog(this,
+            "Invalid input. Please pay again.",
+            "Invalid Input.",
+            JOptionPane.WARNING_MESSAGE);
+            paymentField.setText("");
+            return;
     }
+
+    JOptionPane.showMessageDialog(this,
+        "Order completed successfully!\n" +
+        "Table " + tablePanel.getTableNumber() + " is now available.",
+        "Order Completed",
+        JOptionPane.INFORMATION_MESSAGE);
+   
+
+    double userPayment = Double.parseDouble(paymentField.getText());
+    OrderManager.getInstance().completeOrder(tablePanel.getTableNumber(), userPayment);
+    
+    tablePanel.setOccupied(false);
+
+    dispose();
+   
+
+    RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
+    dashboard.updateTableState(tablePanel.getTableNumber(), false);
+    dashboard.setVisible(true);
+}
    
 }
