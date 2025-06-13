@@ -1,3 +1,4 @@
+package src;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -53,7 +54,7 @@ public class TablePanel extends JPanel {
                 // Double-check if there's an active order for this table
                 if (OrderManager.getInstance().hasOrder(tableNumber)) {
                     occupied = true;
-                    // Update database to match
+                    // Updates database 
                     try {
                         Database.updateTableStatus(tableNumber, true);
                     } catch (SQLException e) {

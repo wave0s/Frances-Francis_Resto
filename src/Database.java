@@ -1,6 +1,8 @@
 
+package src;
 import java.sql.*;
-
+import java.util.ArrayList;
+import java.util.List;
 public class Database {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/restaurantdb";
     private static final String DB_USER = "root";
@@ -34,7 +36,9 @@ public class Database {
             DatabaseMetaData metaData = conn.getMetaData();
             ResultSet tables = metaData.getTables(null, null, "menu_item", null);
             if (!tables.next()) {
-                System.out.println("Warning: menu_item table not found. Please create database schema.");
+                System.out.println("Warning: menu_item table not found. Please check your database schema.");
+            } else {
+                System.out.println("Database tables found and ready to use.");
             }
 
         } catch (SQLException e) {
@@ -43,116 +47,7 @@ public class Database {
         }
     }
 
-    public static void initializeDatabase() {
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement()) {
-
-                
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS tables (
-                    table_number INT PRIMARY KEY,
-                    occupied BOOLEAN DEFAULT FALSE
-                )
-            """);
-
-            
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS menu_item (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    price DECIMAL(10,2) NOT NULL,
-                    category VARCHAR(50) NOT NULL
-                )
-            """);
-
-            
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS orders (
-                    order_id INT AUTO_INCREMENT PRIMARY KEY,
-                    table_number INT NOT NULL,
-                    order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    status VARCHAR(50) DEFAULT 'In Progress',
-                    subtotal DECIMAL(10,2) DEFAULT 0.00,
-                    tax DECIMAL(10,2) DEFAULT 0.00,
-                    total DECIMAL(10,2) DEFAULT 0.00,
-                    FOREIGN KEY (table_number) REFERENCES tables(table_number)
-                )
-            """);
-
-            
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS order_items (
-                    item_id INT AUTO_INCREMENT PRIMARY KEY,
-                    order_id INT NOT NULL,
-                    menu_item_id INT NOT NULL,
-                    item_name VARCHAR(100) NOT NULL,
-                    item_price DECIMAL(10,2) NOT NULL,
-                    quantity INT NOT NULL,
-                    item_total DECIMAL(10,2) NOT NULL,
-                    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
-                    FOREIGN KEY (menu_item_id) REFERENCES menu_item(id)
-                )
-            """);
-
-            
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS restosales (
-                    sale_id INT AUTO_INCREMENT PRIMARY KEY,
-                    tableNum INT NOT NULL,
-                    customerOrder TEXT NOT NULL,
-                    totalBill DECIMAL(10,2) NOT NULL,
-                    paidAmount DECIMAL(10,2) NOT NULL,
-                    sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """);
-
-            
-            try {
-                stmt.execute("ALTER TABLE menu_item ADD COLUMN totalSales DECIMAL(10,2) DEFAULT 0.00");
-                System.out.println("Added totalSales column to menu_item table.");
-            } catch (SQLException e) {
-                
-                if (!e.getMessage().contains("Duplicate column name")) {
-                    System.err.println("Error adding totalSales column: " + e.getMessage());
-                }
-            }
-
-            
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM tables");
-            rs.next();
-            if (rs.getInt(1) == 0) {
-                for (int i = 1; i <= 10; i++) {
-                    stmt.execute("INSERT INTO tables (table_number, occupied) VALUES (" + i + ", FALSE)");
-                }
-                System.out.println("Default tables created");
-            }
-
-            
-            rs = stmt.executeQuery("SELECT COUNT(*) FROM menu_item");
-            rs.next();
-            if (rs.getInt(1) == 0) {
-                stmt.execute("INSERT INTO menu_item (name, price, category) VALUES " +
-                    "('Adobo', 150.00, 'Main Course'), " +
-                    "('Sinigang', 180.00, 'Main Course'), " +
-                    "('Lechon Kawali', 220.00, 'Main Course'), " +
-                    "('Pancit Canton', 120.00, 'Noodles'), " +
-                    "('Lumpia', 80.00, 'Appetizer'), " +
-                    "('Rice', 25.00, 'Sides'), " +
-                    "('Halo-Halo', 95.00, 'Dessert'), " +
-                    "('Buko Juice', 45.00, 'Drinks'), " +
-                    "('Softdrinks', 35.00, 'Drinks')");
-                System.out.println("Sample menu items created");
-            }
-
-            System.out.println("Database initialized successfully");
-
-        } catch (SQLException e) {
-            System.err.println("Failed to initialize database: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    
+    // ORDER MANAGEMENT METHODS
     public static int createOrder(int tableNumber) throws SQLException {
         String sql = "INSERT INTO orders (table_number, status, subtotal, tax, total) VALUES (?, 'In Progress', 0.00, 0.00, 0.00)";
 
@@ -173,7 +68,6 @@ public class Database {
     }
 
     public static void addOrderItem(int orderId, String itemName, double itemPrice, int quantity) throws SQLException {
-        // First, get the menu item ID
         int menuItemId = getMenuItemId(itemName);
         double itemTotal = itemPrice * quantity;
 
@@ -257,7 +151,7 @@ public class Database {
         Connection conn = null;
         try {
             conn = getConnection();
-            conn.setAutoCommit(false); 
+            conn.setAutoCommit(false);
 
             String getOrderSql = "SELECT subtotal, tax, total FROM orders WHERE order_id = ?";
             double subtotal = 0, tax = 0, total = 0;
@@ -288,7 +182,6 @@ public class Database {
                              .append(" x").append(quantity)
                              .append(" (₱").append(itemPrice).append(")");
 
-
                     updateMenuItemSalesInTransaction(conn, itemName, itemTotal);
                 }
             }
@@ -302,13 +195,11 @@ public class Database {
                 pstmt.executeUpdate();
             }
 
-        
             String deleteItemsSql = "DELETE FROM order_items WHERE order_id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteItemsSql)) {
                 pstmt.setInt(1, orderId);
                 pstmt.executeUpdate();
             }
-
 
             String deleteOrderSql = "DELETE FROM orders WHERE order_id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteOrderSql)) {
@@ -316,16 +207,15 @@ public class Database {
                 pstmt.executeUpdate();
             }
 
-
             updateTableStatusInTransaction(conn, tableNumber, false);
 
-            conn.commit(); 
+            conn.commit();
             System.out.println("Order completed and moved to sales records");
 
         } catch (SQLException e) {
             if (conn != null) {
                 try {
-                    conn.rollback(); 
+                    conn.rollback();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -334,7 +224,7 @@ public class Database {
         } finally {
             if (conn != null) {
                 try {
-                    conn.setAutoCommit(true); 
+                    conn.setAutoCommit(true);
                     conn.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -430,7 +320,6 @@ public class Database {
 
     public static void synchronizeTableStates() throws SQLException {
         try (Connection conn = getConnection()) {
-            // First, set all tables to available
             try (Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate("UPDATE tables SET occupied = FALSE");
             }
@@ -441,5 +330,89 @@ public class Database {
                 System.out.println("Synchronized " + updated + " table states with active orders");
             }
         }
+    }
+
+    // MENU MANAGEMENT METHODS
+    public static List<MenuItemData> getAllMenuItems() throws SQLException {
+        List<MenuItemData> items = new ArrayList<>();
+        String sql = "SELECT id, name, price, category FROM menu_item ORDER BY category, name";
+        
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                MenuItemData item = new MenuItemData(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getDouble("price"),
+                    rs.getString("category")
+                );
+                items.add(item);
+            }
+        }
+        return items;
+    }
+
+    public static boolean addMenuItem(String name, double price, String category) throws SQLException {
+        String sql = "INSERT INTO menu_item (name, price, category, totalSales) VALUES (?, ?, ?, 0.00)";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, name);
+            pstmt.setDouble(2, price);
+            pstmt.setString(3, category);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            System.out.println("Added menu item: " + name + " - ₱" + String.format("%.2f", price));
+            return rowsAffected > 0;
+        }
+    }
+
+    public static boolean updateMenuItem(int id, String name, double price, String category) throws SQLException {
+        String sql = "UPDATE menu_item SET name = ?, price = ?, category = ? WHERE id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, name);
+            pstmt.setDouble(2, price);
+            pstmt.setString(3, category);
+            pstmt.setInt(4, id);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            System.out.println("Updated menu item ID " + id + ": " + name + " - ₱" + String.format("%.2f", price));
+            return rowsAffected > 0;
+        }
+    }
+
+    public static boolean deleteMenuItem(int id) throws SQLException {
+        String sql = "DELETE FROM menu_item WHERE id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, id);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            System.out.println("Deleted menu item ID: " + id);
+            return rowsAffected > 0;
+        }
+    }
+
+    public static List<String> getCategories() throws SQLException {
+        List<String> categories = new ArrayList<>();
+        String sql = "SELECT DISTINCT category FROM menu_item ORDER BY category";
+        
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                categories.add(rs.getString("category"));
+            }
+        }
+        return categories;
     }
 }

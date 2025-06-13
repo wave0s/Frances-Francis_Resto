@@ -1,3 +1,4 @@
+package src;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +29,6 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         JPanel headerPanel = createHeaderPanel();
         add(headerPanel, BorderLayout.NORTH);
 
-        
         tablePanel = new JPanel(new GridLayout(2, 5, 15, 15));
         tablePanel.setBackground(new Color(215, 201, 174));
         tablePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -89,8 +89,20 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
             RestaurantHomePage.getInstance().setVisible(true);
         });
 
+        JButton menuManagementButton = new JButton("Manage Menu");
+        menuManagementButton.setBackground(new Color(155, 89, 182));
+        menuManagementButton.setForeground(Color.BLUE);
+        menuManagementButton.setFont(new Font("Arial", Font.BOLD, 12));
+        menuManagementButton.setFocusPainted(false);
+        menuManagementButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        menuManagementButton.addActionListener(e -> {
+            this.setVisible(false);
+            new MenuManagement().setVisible(true);
+        });
+
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setBackground(new Color(166, 135, 99));
+        rightPanel.add(menuManagementButton);
         rightPanel.add(backToHomeButton);
 
         footerPanel.add(rightPanel, BorderLayout.EAST);
@@ -103,9 +115,7 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         tables.clear();
 
         try {
-            Database.initializeDatabase();
-        
-            // Synchronize table states with active orders
+            Database.testConnection();
             Database.synchronizeTableStates();
         
             List<TablePanel> loadedTables = TablePanel.loadFromDatabase(this);
@@ -119,7 +129,6 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         } catch (Exception e) {
             System.err.println("Error loading tables: " + e.getMessage());
             e.printStackTrace();
-            // Create default tables if there's an error
             for (int i = 1; i <= NUM_TABLES; i++) {
                 TablePanel table = new TablePanel(i, this);
                 tables.put(i, table);
@@ -130,7 +139,6 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
 
         tablePanel.revalidate();
         tablePanel.repaint();
-        
     }
 
     public static void launchDashboard() {
@@ -141,15 +149,7 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
     }
 
     public void updateStats() {
-        int occupiedCount = 0;
-        for (TablePanel table : tables.values()) {
-            if (table.isOccupied()) {
-                occupiedCount++;
-            }
-        }
-
-        int availableCount = NUM_TABLES - occupiedCount;
-        
+        // Method kept for interface compatibility
     }
 
     public static void main(String[] args) {

@@ -1,3 +1,4 @@
+package src;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
@@ -58,7 +59,7 @@ public class Order {
         items.add(new OrderItem(name, price, quantity));
         calculateTotals();
         
-        // Save to database if order has an ID
+        // Save to database if order has an id
         if (orderId != -1) {
             try {
                 Database.addOrderItem(orderId, name, price, quantity);

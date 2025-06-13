@@ -1,3 +1,4 @@
+package src;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -31,16 +32,16 @@ public class RestaurantHomePage extends JFrame {
         mainPanel.setBackground(new Color(10, 26, 47));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
 
-        // Header Section
+        // Header sec
         JPanel headerSection = createHeaderSection();
         
-        // Welcome Message Section
+        // Welcome msg Sec
         JPanel welcomeSection = createWelcomeSection();
         
-        // Button Section
+        // Button sec
         JPanel buttonSection = createButtonSection();
         
-        // Footer Section
+        // Footer sec
         JPanel footerSection = createFooterSection();
 
         mainPanel.add(headerSection, BorderLayout.NORTH);
@@ -87,7 +88,7 @@ public class RestaurantHomePage extends JFrame {
 
         JLabel nameLabel = new JLabel("FRANCES AND FRANCIS");
         nameLabel.setFont(restonameFont);
-        nameLabel.setForeground(new Color(255, 215, 0)); // Gold color
+        nameLabel.setForeground(new Color(255, 215, 0));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel sloganLabel = new JLabel("KAON NA KAMO");

@@ -1,0 +1,10 @@
+{
+    "java.project.sourcePaths": [
+        "."
+    ],
+    "java.project.referencedLibraries": [
+        "lib\\mysql-connector-j-9.2.0.jar",
+        "c:\\Users\\Louie\\Documents\\DEV101\\Resto-101\\lib\\mysql-connector-j-9.2.0.jar"
+    ],
+    "java.debug.settings.onBuildFailureProceed": true
+}
