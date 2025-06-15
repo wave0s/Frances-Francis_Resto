@@ -22,7 +22,8 @@ public class MenuManagement extends JFrame {
 
     public MenuManagement() {
         setTitle("Menu Management - Frances & Francis");
-        setSize(900, 700);
+        //setSize(900, 700); gin kakas ko ni
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // gin add ko ni
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -415,17 +416,6 @@ public class MenuManagement extends JFrame {
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
