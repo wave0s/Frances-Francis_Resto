@@ -55,20 +55,20 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         headerPanel.setBackground(new Color(45, 45, 45));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("Frances & Francis - Table Management", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Frances & Francis", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
 
-        statusLabel = new JLabel("Cookin'");
+        /*statusLabel = new JLabel("Cookin'");
         statusLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         statusLabel.setForeground(new Color(46, 204, 113));
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setBackground(new Color(45, 45, 45));
         rightPanel.add(statusLabel);
-
+*/
         headerPanel.add(titleLabel, BorderLayout.CENTER);
-        headerPanel.add(rightPanel, BorderLayout.EAST);
+        //headerPanel.add(rightPanel, BorderLayout.EAST);
 
         return headerPanel;
     }

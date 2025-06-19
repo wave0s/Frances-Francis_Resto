@@ -30,7 +30,7 @@ public class TablePanel extends JPanel {
         // Set neutral background for the entire panel
         setBackground(new Color(234, 224, 210));
 
-        tableLabel = new JLabel("Table " + tableNumber, SwingConstants.CENTER);
+        tableLabel = new JLabel("#" + tableNumber, SwingConstants.CENTER);
         tableLabel.setFont(new Font("Arial", Font.BOLD, 16));
         tableLabel.setForeground(Color.BLACK);
 
@@ -64,11 +64,9 @@ public class TablePanel extends JPanel {
 
     private void handleButtonClick() {
         if (!occupied) {
-            // Table is available - open order menu
             parentDashboard.setVisible(false);
             new OrderMenu(this, parentDashboard).setVisible(true);
         } else {
-            // Table is occupied - show options
             String[] options = {"Edit Order", "Complete Order", "Cancel"};
             int choice = JOptionPane.showOptionDialog(
                     this,
@@ -82,9 +80,9 @@ public class TablePanel extends JPanel {
             );
 
             switch (choice) {
-                case 0: // Edit Order
+                case 0: // Edit Order - Now opens OrderMenu in edit mode
                     parentDashboard.setVisible(false);
-                    new EditOrderWPayment(this).setVisible(true);
+                    new OrderMenu(this, parentDashboard, true).setVisible(true); // true indicates edit mode
                     break;
                 case 1: // Complete Order
                     parentDashboard.setVisible(false);
@@ -120,28 +118,24 @@ public class TablePanel extends JPanel {
 
     private void updateAppearance() {
         if (occupied) {
-            // Only highlight the status label in red
             statusLabel.setText("Occupied");
-            statusLabel.setBackground(new Color(231, 71, 60)); // Red background
+            statusLabel.setBackground(new Color(231, 71, 60));
             statusLabel.setForeground(Color.WHITE); // White text
             actionButton.setText("View Order");
-            actionButton.setBackground(new Color(255, 193, 7)); // Yellow for occupied table button
+            actionButton.setBackground(new Color(255, 193, 7));
             actionButton.setForeground(Color.BLACK);
         } else {
-            // Only highlight the status label in green
             statusLabel.setText("Available");
-            statusLabel.setBackground(new Color(60, 231, 74)); // Green background
+            statusLabel.setBackground(new Color(60, 231, 74));
             statusLabel.setForeground(Color.BLACK); // Black text
             actionButton.setText("Take Order");
-            actionButton.setBackground(new Color(52, 152, 219)); // Blue for available table button
+            actionButton.setBackground(new Color(52, 152, 219));
             actionButton.setForeground(Color.BLACK);
         }
 
-        // Keep table label and panel background neutral
         tableLabel.setForeground(Color.BLACK);
     }
 
-    // Static method to load tables from database
     public static List<TablePanel> loadFromDatabase(RestaurantDashboard dashboard) throws SQLException {
         List<TablePanel> tables = new ArrayList<>();
 
@@ -159,7 +153,6 @@ public class TablePanel extends JPanel {
             }
         }
 
-        // If no tables in database, create default tables
         if (tables.isEmpty()) {
             for (int i = 1; i <= 10; i++) {
                 TablePanel table = new TablePanel(i, dashboard);

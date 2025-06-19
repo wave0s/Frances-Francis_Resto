@@ -22,7 +22,8 @@ public class MenuManagement extends JFrame {
 
     public MenuManagement() {
         setTitle("Menu Management - Frances & Francis");
-        setSize(900, 700);
+        //setSize(900, 700);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -293,7 +294,7 @@ public class MenuManagement extends JFrame {
             categoryCombo.setSelectedItem(selectedItem.getCategory());
             
             addButton.setEnabled(false); // gin add ko ni
-            updateButton.setEnabled(true);
+            updateButton.setEnabled(false); // gin change ko ni
             deleteButton.setEnabled(true);
         } else {
             clearForm();
@@ -422,10 +423,23 @@ public class MenuManagement extends JFrame {
 
 
 
+    /*private boolean validateUpdate() {
+        String name =nameField.getText().trim();
+        String priceText = priceField.getText().trim();
+        String category = (String) categoryCombo.getSelectedItem();
+
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter an item name.",
+                    "Validation Error",
+                    JOptionPane.WARNING_MESSAGE);
+            nameField.requestFocus();
+            return false;
+        }
+    }
 
 
-
-
+*/
 
 
 

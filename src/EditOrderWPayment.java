@@ -7,15 +7,14 @@ public class EditOrderWPayment extends JFrame {
     private TablePanel tablePanel;
     private RestaurantDashboard parentDashboard;
     private JTextField paymentField = new JTextField();
-    private JLabel change = new JLabel("Change: P 0.00");
     private Order order;
-   
+
 
 
     public EditOrderWPayment(TablePanel tablePanel) {
         this.tablePanel = tablePanel;
         this.parentDashboard = tablePanel.getParentDashboard();
-       
+
         setTitle("Edit Order - Table " + tablePanel.getTableNumber());
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -71,7 +70,7 @@ public class EditOrderWPayment extends JFrame {
         sectionTitle.setFont(new Font("Arial", Font.BOLD, 18));
         sectionTitle.setForeground(new Color(52, 73, 94));
         sectionTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-       
+
         JTextArea orderDetails = new JTextArea();
         orderDetails.setLineWrap(true);
         orderDetails.setWrapStyleWord(true);
@@ -82,18 +81,18 @@ public class EditOrderWPayment extends JFrame {
 
         order = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
         StringBuilder orderText = new StringBuilder();
-       
+
         if (order != null) {
             orderText.append("Current Order for Table ").append(tablePanel.getTableNumber()).append(":\n\n");
-           
+
             for (Order.OrderItem item : order.getItems()) {
                 orderText.append("• ").append(item.getName())
-                         .append(" x").append(item.getQuantity())
-                         .append(" - Php ").append(String.format("%.2f", item.getPrice() * item.getQuantity()))
-                         .append("\n");
+                        .append(" x").append(item.getQuantity())
+                        .append(" - Php ").append(String.format("%.2f", item.getPrice() * item.getQuantity()))
+                        .append("\n");
             }
-           
-            orderText.append("\nSubtotal: Php ").append(String.format("%.2f", order.getSubtotal())); 
+
+            orderText.append("\nSubtotal: Php ").append(String.format("%.2f", order.getSubtotal()));
             orderText.append("\nTax (12%): Php ").append(String.format("%.2f", order.getTax()));
             orderText.append("\nTotal: Php ").append(String.format("%.2f", order.getTotal()));
             orderText.append("\n\nOrder Status: ").append(order.getStatus());
@@ -102,9 +101,9 @@ public class EditOrderWPayment extends JFrame {
             orderText.append("No order found for Table ").append(tablePanel.getTableNumber()).append(".\n\n");
             orderText.append("This table appears to be occupied but no order data is available.");
         }
-   
-     
-       
+
+
+
         JPanel paymentPanel = new JPanel();
         paymentPanel.setPreferredSize(new Dimension(350, 100));
         paymentPanel.setBackground(new Color(234, 224, 210));
@@ -121,20 +120,18 @@ public class EditOrderWPayment extends JFrame {
         JLabel dash = new JLabel("---------------------------------------------------------------------------------");
         JLabel totalLabel = new JLabel("Total: P " + String.format("%.2f", order.getTotal()));
         JLabel Cash = new JLabel(" Enter Payment Amount:");
- 
+
 
 
         PaymentTitle.setFont(new Font("Arial", Font.BOLD, 15));
         totalLabel.setFont(new Font("Arial", Font.BOLD, 12));
         paymentField.setMaximumSize(new Dimension(300,30));
-        change.setFont(new Font("Arial", Font.BOLD, 12));
-       
+
         paymentPanel.add(PaymentTitle);
         paymentPanel.add(dash);
         paymentPanel.add(Box.createVerticalStrut(10));
         paymentPanel.add(totalLabel);
         paymentPanel.add(Box.createVerticalStrut(10));
-        paymentPanel.add(change);
         paymentPanel.add(Box.createVerticalStrut(10));
         paymentPanel.add(lines);
         paymentPanel.add(Box.createVerticalStrut(20));
@@ -197,8 +194,8 @@ public class EditOrderWPayment extends JFrame {
         confirmBtn.setFont(new Font("Arial", Font.BOLD, 12));
         confirmBtn.setFocusPainted(false);
         confirmBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-        confirmBtn.addActionListener(e -> confirmOrder(paymentField, order, change));
-       
+        confirmBtn.addActionListener(e -> confirmOrder(paymentField, order));
+
         buttonPanel.add(cancelBtn);
         buttonPanel.add(confirmBtn);
 
@@ -210,48 +207,48 @@ public class EditOrderWPayment extends JFrame {
 
 
 
-    private void confirmOrder(JTextField paymentField, Order order, JLabel change) {
-    try{
-        double userPayment = Double.parseDouble(paymentField.getText());
-        double totalAmount = order.getTotal();
-        if (userPayment < totalAmount){
-            JOptionPane.showMessageDialog(this,
-                "Insufficient Payment Amount. Please pay again.",
-                "Insufficient Amount.",
-                JOptionPane.WARNING_MESSAGE);
+    private void confirmOrder(JTextField paymentField, Order order) {
+        try{
+            double userPayment = Double.parseDouble(paymentField.getText());
+            double totalAmount = order.getTotal();
+            if (userPayment < totalAmount){
+                JOptionPane.showMessageDialog(this,
+                        "Insufficient Payment Amount. Please pay again.",
+                        "Insufficient Amount.",
+                        JOptionPane.WARNING_MESSAGE);
                 paymentField.setText("");
                 return;
-        } else if(userPayment >= totalAmount){
-            double userChange = userPayment - totalAmount;
-            change.setText(String.format("Change: P %.2f", userChange));
-        }
-    } catch(NumberFormatException nfe){
-        JOptionPane.showMessageDialog(this,
-            "Invalid input. Please pay again.",
-            "Invalid Input.",
-            JOptionPane.WARNING_MESSAGE);
+            } else if(userPayment >= totalAmount){
+                double userChange = userPayment - totalAmount;
+                JOptionPane.showMessageDialog(this,
+                        "Order completed successfully!\n" +
+                                "Table " + tablePanel.getTableNumber() + " is now available.\n\n" +
+                                String.format("Change: P %.2f", userChange),
+                        "Order Completed",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch(NumberFormatException nfe){
+            JOptionPane.showMessageDialog(this,
+                    "Invalid input. Please pay again.",
+                    "Invalid Input.",
+                    JOptionPane.WARNING_MESSAGE);
             paymentField.setText("");
             return;
+        }
+
+
+
+        double userPayment = Double.parseDouble(paymentField.getText());
+        OrderManager.getInstance().completeOrder(tablePanel.getTableNumber(), userPayment);
+
+        tablePanel.setOccupied(false);
+
+        dispose();
+
+
+        RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
+        dashboard.updateTableState(tablePanel.getTableNumber(), false);
+        dashboard.setVisible(true);
     }
 
-    JOptionPane.showMessageDialog(this,
-        "Order completed successfully!\n" +
-        "Table " + tablePanel.getTableNumber() + " is now available.",
-        "Order Completed",
-        JOptionPane.INFORMATION_MESSAGE);
-   
-
-    double userPayment = Double.parseDouble(paymentField.getText());
-    OrderManager.getInstance().completeOrder(tablePanel.getTableNumber(), userPayment);
-    
-    tablePanel.setOccupied(false);
-
-    dispose();
-   
-
-    RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
-    dashboard.updateTableState(tablePanel.getTableNumber(), false);
-    dashboard.setVisible(true);
-}
-   
 }

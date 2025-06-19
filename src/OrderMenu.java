@@ -21,6 +21,7 @@ public class OrderMenu extends JFrame {
     private Map<String, OrderItem> orderItems;
     private JScrollPane orderScrollPane;
     private ArrayList<String> cart = new ArrayList<>();
+    private boolean isEditMode = false; // New field to track edit mode
 
     // New fields for sorting
     private JPanel menuGridPanel;
@@ -41,14 +42,21 @@ public class OrderMenu extends JFrame {
         }
     }
 
+    // Original constructor for new orders
     public OrderMenu(TablePanel tablePanel, RestaurantDashboard dashboard) {
+        this(tablePanel, dashboard, false);
+    }
+
+    // New constructor with edit mode parameter
+    public OrderMenu(TablePanel tablePanel, RestaurantDashboard dashboard, boolean editMode) {
         this.tablePanel = tablePanel;
         this.dashboard = dashboard;
         this.orderItems = new HashMap<>();
         this.allMenuItems = new ArrayList<>();
+        this.isEditMode = editMode;
 
-        setTitle("Order Menu - Table " + tablePanel.getTableNumber());
-        setSize(900, 700); // Increased size to accommodate sorting controls
+        setTitle((editMode ? "Edit Order" : "Order Menu") + " - Table " + tablePanel.getTableNumber());
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -60,6 +68,33 @@ public class OrderMenu extends JFrame {
         createFooterPanel();
 
         loadMenuItems(); // Load items after UI is created
+
+        // If in edit mode, load existing order
+        if (isEditMode) {
+            loadExistingOrder();
+        }
+    }
+
+    private void loadExistingOrder() {
+        Order existingOrder = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
+        if (existingOrder != null && !existingOrder.isEmpty()) {
+            // Clear the default empty message
+            orderItemsPanel.removeAll();
+
+            // Load existing order items
+            for (Order.OrderItem item : existingOrder.getItems()) {
+                OrderItem orderItem = new OrderItem(item.getName(), item.getPrice());
+                orderItem.quantity = item.getQuantity();
+                orderItems.put(item.getName(), orderItem);
+                createOrderItemPanel(orderItem);
+            }
+
+            updateTotal();
+            orderItemsPanel.revalidate();
+            orderItemsPanel.repaint();
+
+            System.out.println("Loaded existing order " + existingOrder.getOrderId() + " for editing");
+        }
     }
 
     private void createHeaderPanel() {
@@ -67,7 +102,8 @@ public class OrderMenu extends JFrame {
         headerPanel.setBackground(new Color(45, 45, 45));
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("Order Menu - Table " + tablePanel.getTableNumber(), SwingConstants.CENTER);
+        String titleText = (isEditMode ? "Edit Order - " : "") + "Table " + tablePanel.getTableNumber();
+        JLabel titleLabel = new JLabel(titleText, SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
 
@@ -315,7 +351,7 @@ public class OrderMenu extends JFrame {
         return itemPanel;
     }
 
-    // Enhanced MenuItem class to include categ
+    // Enhanced MenuItem class to include category
     private static class MenuItem {
         private String name;
         private double price;
@@ -341,7 +377,8 @@ public class OrderMenu extends JFrame {
         ));
         orderSection.setPreferredSize(new Dimension(300, 0));
 
-        JLabel orderTitle = new JLabel("Current Order");
+        String orderTitleText = isEditMode ? "Edit Order" : "Current Order";
+        JLabel orderTitle = new JLabel(orderTitleText);
         orderTitle.setFont(new Font("Arial", Font.BOLD, 18));
         orderTitle.setForeground(new Color(52, 73, 94));
         orderTitle.setBorder(new EmptyBorder(0, 0, 15, 0));
@@ -516,7 +553,8 @@ public class OrderMenu extends JFrame {
             RestaurantDashboard.showDashboard();
         });
 
-        JButton placeOrderBtn = new JButton("Place Order");
+        String placeOrderText = isEditMode ? "Update Order" : "Place Order";
+        JButton placeOrderBtn = new JButton(placeOrderText);
         placeOrderBtn.setBackground(new Color(60, 231, 74));
         placeOrderBtn.setForeground(Color.BLACK);
         placeOrderBtn.setFont(new Font("Arial", Font.BOLD, 12));
@@ -524,25 +562,14 @@ public class OrderMenu extends JFrame {
         placeOrderBtn.setBorder(new EmptyBorder(8, 20, 8, 20));
         placeOrderBtn.addActionListener(e -> {
             if (!orderItems.isEmpty()) {
-                OrderManager.getInstance().createOrder(tablePanel.getTableNumber());
-                Order order = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
-
-                for (Map.Entry<String, OrderItem> entry : orderItems.entrySet()) {
-                    OrderItem item = entry.getValue();
-                    order.addItem(item.name, item.price, item.quantity);
+                if (isEditMode) {
+                    updateExistingOrder();
+                } else {
+                    createNewOrder();
                 }
-                order.calculateTotals();
-
-                tablePanel.setOccupied(true);
-
-                dispose();
-
-                RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
-                dashboard.updateTableState(tablePanel.getTableNumber(), true);
-                dashboard.setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this,
-                        "Please add items to your order before placing it.",
+                        "Please add items to your order before " + (isEditMode ? "updating" : "placing") + " it.",
                         "Empty Order",
                         JOptionPane.WARNING_MESSAGE);
             }
@@ -576,5 +603,81 @@ public class OrderMenu extends JFrame {
 
         footerPanel.add(buttonPanel, BorderLayout.CENTER);
         add(footerPanel, BorderLayout.SOUTH);
+    }
+
+    private void createNewOrder() {
+        OrderManager.getInstance().createOrder(tablePanel.getTableNumber());
+        Order order = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
+
+        for (Map.Entry<String, OrderItem> entry : orderItems.entrySet()) {
+            OrderItem item = entry.getValue();
+            order.addItem(item.name, item.price, item.quantity);
+        }
+        order.calculateTotals();
+
+        tablePanel.setOccupied(true);
+
+        dispose();
+
+        RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
+        dashboard.updateTableState(tablePanel.getTableNumber(), true);
+        dashboard.setVisible(true);
+    }
+
+    private void updateExistingOrder() {
+        Order existingOrder = OrderManager.getInstance().getOrder(tablePanel.getTableNumber());
+        if (existingOrder != null) {
+            try {
+                // Convert UI order items to Order.OrderItem list
+                List<Order.OrderItem> newItems = new ArrayList<>();
+                for (Map.Entry<String, OrderItem> entry : orderItems.entrySet()) {
+                    OrderItem uiItem = entry.getValue();
+                    Order.OrderItem orderItem = new Order.OrderItem(uiItem.name, uiItem.price, uiItem.quantity);
+                    newItems.add(orderItem);
+                }
+
+                // Calculate new totals
+                double newSubtotal = 0.0;
+                for (Order.OrderItem item : newItems) {
+                    newSubtotal += item.getPrice() * item.getQuantity();
+                }
+                double newTax = newSubtotal * 0.12; // 12% tax
+                double newTotal = newSubtotal + newTax;
+
+                // Update the order in database using transaction
+                Database.updateOrderWithItems(existingOrder.getOrderId(), newItems, newSubtotal, newTax, newTotal);
+
+                // Update the in-memory order object
+                existingOrder.clearItems();
+                for (Order.OrderItem item : newItems) {
+                    existingOrder.addItemWithoutCalculation(item.getName(), item.getPrice(), item.getQuantity());
+                }
+                existingOrder.setTotals(newSubtotal, newTax, newTotal);
+
+                // Verify the update in database
+                Database.verifyOrderInDatabase(existingOrder.getOrderId());
+
+                System.out.println("Order " + existingOrder.getOrderId() + " updated successfully - New total: ₱" + String.format("%.2f", newTotal));
+
+                JOptionPane.showMessageDialog(this,
+                        "Order updated successfully!\nOrder ID: " + existingOrder.getOrderId() +
+                                "\nNew Total: ₱" + String.format("%.2f", newTotal),
+                        "Order Updated",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                dispose();
+
+                RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
+                dashboard.setVisible(true);
+
+            } catch (SQLException e) {
+                System.err.println("Failed to update order: " + e.getMessage());
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this,
+                        "Failed to update order: " + e.getMessage(),
+                        "Update Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

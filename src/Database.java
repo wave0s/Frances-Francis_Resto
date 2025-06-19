@@ -1,4 +1,3 @@
-
 package src;
 import java.sql.*;
 import java.util.ArrayList;
@@ -99,8 +98,13 @@ public class Database {
             pstmt.setDouble(3, total);
             pstmt.setInt(4, orderId);
 
-            pstmt.executeUpdate();
-            System.out.println("Updated totals for order " + orderId);
+            int rowsUpdated = pstmt.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("Updated totals for order " + orderId + " - Subtotal: ₱" + String.format("%.2f", subtotal) +
+                        ", Tax: ₱" + String.format("%.2f", tax) + ", Total: ₱" + String.format("%.2f", total));
+            } else {
+                System.err.println("Warning: No rows updated for order " + orderId);
+            }
         }
     }
 
@@ -147,6 +151,153 @@ public class Database {
         }
     }
 
+    public static void clearOrderItems(int orderId) throws SQLException {
+        String sql = "DELETE FROM order_items WHERE order_id = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, orderId);
+            int rowsDeleted = pstmt.executeUpdate();
+
+            System.out.println("Cleared " + rowsDeleted + " items from order " + orderId);
+        }
+    }
+
+    // New method to update an entire order with transaction support
+    public static void updateOrderWithItems(int orderId, List<Order.OrderItem> items, double subtotal, double tax, double total) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false); // Start transaction
+
+            // Clear existing items
+            String clearItemsSql = "DELETE FROM order_items WHERE order_id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(clearItemsSql)) {
+                pstmt.setInt(1, orderId);
+                int deletedRows = pstmt.executeUpdate();
+                System.out.println("Cleared " + deletedRows + " existing items from order " + orderId);
+            }
+
+            // Add new items
+            String addItemSql = "INSERT INTO order_items (order_id, menu_item_id, item_name, item_price, quantity, item_total) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement pstmt = conn.prepareStatement(addItemSql)) {
+                for (Order.OrderItem item : items) {
+                    int menuItemId = getMenuItemIdInTransaction(conn, item.getName());
+                    double itemTotal = item.getPrice() * item.getQuantity();
+
+                    pstmt.setInt(1, orderId);
+                    pstmt.setInt(2, menuItemId);
+                    pstmt.setString(3, item.getName());
+                    pstmt.setDouble(4, item.getPrice());
+                    pstmt.setInt(5, item.getQuantity());
+                    pstmt.setDouble(6, itemTotal);
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+                System.out.println("Added " + items.size() + " new items to order " + orderId);
+            }
+
+            // Update order totals
+            String updateTotalsSql = "UPDATE orders SET subtotal = ?, tax = ?, total = ? WHERE order_id = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateTotalsSql)) {
+                pstmt.setDouble(1, subtotal);
+                pstmt.setDouble(2, tax);
+                pstmt.setDouble(3, total);
+                pstmt.setInt(4, orderId);
+
+                int rowsUpdated = pstmt.executeUpdate();
+                if (rowsUpdated > 0) {
+                    System.out.println("Updated order " + orderId + " totals - Subtotal: ₱" + String.format("%.2f", subtotal) +
+                            ", Tax: ₱" + String.format("%.2f", tax) + ", Total: ₱" + String.format("%.2f", total));
+                } else {
+                    throw new SQLException("Failed to update order totals for order " + orderId);
+                }
+            }
+
+            conn.commit(); // Commit transaction
+            System.out.println("Successfully updated order " + orderId + " with " + items.size() + " items");
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    System.err.println("Transaction rolled back for order " + orderId);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private static int getMenuItemIdInTransaction(Connection conn, String itemName) throws SQLException {
+        String sql = "SELECT id FROM menu_item WHERE name = ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, itemName);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+
+            throw new SQLException("Menu item not found: " + itemName);
+        }
+    }
+
+    // Method to verify order data in database
+    public static void verifyOrderInDatabase(int orderId) throws SQLException {
+        String orderSql = "SELECT order_id, table_number, subtotal, tax, total FROM orders WHERE order_id = ?";
+        String itemsSql = "SELECT item_name, item_price, quantity, item_total FROM order_items WHERE order_id = ?";
+
+        try (Connection conn = getConnection()) {
+            // Check order details
+            try (PreparedStatement pstmt = conn.prepareStatement(orderSql)) {
+                pstmt.setInt(1, orderId);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    System.out.println("=== Order " + orderId + " Verification ===");
+                    System.out.println("Table: " + rs.getInt("table_number"));
+                    System.out.println("Subtotal: ₱" + String.format("%.2f", rs.getDouble("subtotal")));
+                    System.out.println("Tax: ₱" + String.format("%.2f", rs.getDouble("tax")));
+                    System.out.println("Total: ₱" + String.format("%.2f", rs.getDouble("total")));
+                } else {
+                    System.err.println("Order " + orderId + " not found in database!");
+                    return;
+                }
+            }
+
+            // Check order items
+            try (PreparedStatement pstmt = conn.prepareStatement(itemsSql)) {
+                pstmt.setInt(1, orderId);
+                ResultSet rs = pstmt.executeQuery();
+
+                System.out.println("Items:");
+                int itemCount = 0;
+                while (rs.next()) {
+                    itemCount++;
+                    System.out.println("  " + rs.getString("item_name") +
+                            " x" + rs.getInt("quantity") +
+                            " @ ₱" + String.format("%.2f", rs.getDouble("item_price")) +
+                            " = ₱" + String.format("%.2f", rs.getDouble("item_total")));
+                }
+                System.out.println("Total items: " + itemCount);
+                System.out.println("=== End Verification ===");
+            }
+        }
+    }
+
     public static void completeOrder(int orderId, int tableNumber, double paidAmount) throws SQLException {
         Connection conn = null;
         try {
@@ -163,6 +314,9 @@ public class Database {
                     subtotal = rs.getDouble("subtotal");
                     tax = rs.getDouble("tax");
                     total = rs.getDouble("total");
+                    System.out.println("Completing order " + orderId + " with total: ₱" + String.format("%.2f", total));
+                } else {
+                    throw new SQLException("Order " + orderId + " not found");
                 }
             }
 
@@ -171,7 +325,9 @@ public class Database {
             try (PreparedStatement pstmt = conn.prepareStatement(getItemsSql)) {
                 pstmt.setInt(1, orderId);
                 ResultSet rs = pstmt.executeQuery();
+                int itemCount = 0;
                 while (rs.next()) {
+                    itemCount++;
                     String itemName = rs.getString("item_name");
                     int quantity = rs.getInt("quantity");
                     double itemPrice = rs.getDouble("item_price");
@@ -179,11 +335,12 @@ public class Database {
 
                     if (orderItems.length() > 0) orderItems.append(", ");
                     orderItems.append(itemName)
-                             .append(" x").append(quantity)
-                             .append(" (₱").append(itemPrice).append(")");
+                            .append(" x").append(quantity)
+                            .append(" (₱").append(itemPrice).append(")");
 
                     updateMenuItemSalesInTransaction(conn, itemName, itemTotal);
                 }
+                System.out.println("Processing " + itemCount + " items for completion");
             }
 
             String insertSalesSql = "INSERT INTO restosales (tableNum, customerOrder, totalBill, paidAmount) VALUES (?, ?, ?, ?)";
@@ -192,30 +349,34 @@ public class Database {
                 pstmt.setString(2, orderItems.toString());
                 pstmt.setDouble(3, total);
                 pstmt.setDouble(4, paidAmount);
-                pstmt.executeUpdate();
+                int salesRows = pstmt.executeUpdate();
+                System.out.println("Inserted " + salesRows + " row into restosales");
             }
 
             String deleteItemsSql = "DELETE FROM order_items WHERE order_id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteItemsSql)) {
                 pstmt.setInt(1, orderId);
-                pstmt.executeUpdate();
+                int deletedItems = pstmt.executeUpdate();
+                System.out.println("Deleted " + deletedItems + " order items");
             }
 
             String deleteOrderSql = "DELETE FROM orders WHERE order_id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteOrderSql)) {
                 pstmt.setInt(1, orderId);
-                pstmt.executeUpdate();
+                int deletedOrders = pstmt.executeUpdate();
+                System.out.println("Deleted " + deletedOrders + " order record");
             }
 
             updateTableStatusInTransaction(conn, tableNumber, false);
 
             conn.commit();
-            System.out.println("Order completed and moved to sales records");
+            System.out.println("Order " + orderId + " completed and moved to sales records successfully");
 
         } catch (SQLException e) {
             if (conn != null) {
                 try {
                     conn.rollback();
+                    System.err.println("Transaction rolled back for order completion: " + orderId);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -314,6 +475,7 @@ public class Database {
             if (rs.next()) {
                 return rs.getInt("id");
             }
+
             throw new SQLException("Menu item not found: " + itemName);
         }
     }
@@ -336,17 +498,17 @@ public class Database {
     public static List<MenuItemData> getAllMenuItems() throws SQLException {
         List<MenuItemData> items = new ArrayList<>();
         String sql = "SELECT id, name, price, category FROM menu_item ORDER BY category, name";
-        
+
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            
+
             while (rs.next()) {
                 MenuItemData item = new MenuItemData(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getDouble("price"),
-                    rs.getString("category")
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDouble("price"),
+                        rs.getString("category")
                 );
                 items.add(item);
             }
@@ -356,14 +518,14 @@ public class Database {
 
     public static boolean addMenuItem(String name, double price, String category) throws SQLException {
         String sql = "INSERT INTO menu_item (name, price, category, totalSales) VALUES (?, ?, ?, 0.00)";
-        
+
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, name);
             pstmt.setDouble(2, price);
             pstmt.setString(3, category);
-            
+
             int rowsAffected = pstmt.executeUpdate();
             System.out.println("Added menu item: " + name + " - ₱" + String.format("%.2f", price));
             return rowsAffected > 0;
@@ -372,29 +534,43 @@ public class Database {
 
     public static boolean updateMenuItem(int id, String name, double price, String category) throws SQLException {
         String sql = "UPDATE menu_item SET name = ?, price = ?, category = ? WHERE id = ?";
-        
+
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, name);
             pstmt.setDouble(2, price);
             pstmt.setString(3, category);
             pstmt.setInt(4, id);
-            
+
+            String getOrderIdSql = "SELECT name FROM menu_item WHERE id = ?";
+
+            try (PreparedStatement pstmt1 = conn.prepareStatement(getOrderIdSql)) {
+                pstmt1.setInt(1, id);
+                ResultSet rs = pstmt1.executeQuery();
+
+                if (rs.next()) {
+                    String existingName = rs.getString("name");
+
+                    if(name.equalsIgnoreCase(existingName)){
+                        return true;
+                    }
+                }
+            }
+
             int rowsAffected = pstmt.executeUpdate();
-            System.out.println("Updated menu item ID " + id + ": " + name + " - ₱" + String.format("%.2f", price));
             return rowsAffected > 0;
         }
     }
 
     public static boolean deleteMenuItem(int id) throws SQLException {
         String sql = "DELETE FROM menu_item WHERE id = ?";
-        
+
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setInt(1, id);
-            
+
             int rowsAffected = pstmt.executeUpdate();
             System.out.println("Deleted menu item ID: " + id);
             return rowsAffected > 0;
@@ -404,11 +580,11 @@ public class Database {
     public static List<String> getCategories() throws SQLException {
         List<String> categories = new ArrayList<>();
         String sql = "SELECT DISTINCT category FROM menu_item ORDER BY category";
-        
+
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            
+
             while (rs.next()) {
                 categories.add(rs.getString("category"));
             }
