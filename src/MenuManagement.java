@@ -22,7 +22,7 @@ public class MenuManagement extends JFrame implements RestaurantFrame {
 
     public MenuManagement() {
         setTitle("Menu Management - Frances & Francis");
-        setSize(900, 700);
+        setExtendedState(JFrame.MAXIMIZED_BOTH); 
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());

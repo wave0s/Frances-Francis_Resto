@@ -103,6 +103,7 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         menuManagementButton.setFocusPainted(false);
         menuManagementButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         menuManagementButton.addActionListener(e -> {
+            this.setVisible(false);
             new MenuManagement().setVisible(true);
         });
 

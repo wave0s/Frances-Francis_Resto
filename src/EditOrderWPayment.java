@@ -8,8 +8,7 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
     private RestaurantDashboard parentDashboard;
     private JTextField paymentField = new JTextField();
     private Order order;
-    private JLabel change;
-   
+    private JLabel change = new JLabel();
 
 
     public EditOrderWPayment(TablePanel tablePanel) {
