@@ -120,13 +120,11 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
             Statement stmt2 = conn.createStatement();
             ResultSet rs2 = stmt2.executeQuery("SELECT name, totalSales FROM menu_item")) {
 
-            // Get total bill from restosales
             double totalBill = 0;
             if (rs1.next()) {
                 totalBill = rs1.getDouble("TotalSales");
             }
 
-            // Build the list of menu item sales
             StringBuilder message = new StringBuilder("Item Sales:\n");
             while (rs2.next()) {
                 String name = rs2.getString("name");
@@ -134,10 +132,8 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
                 message.append(name).append(" = ₱").append(itemSales).append("\n");
             }
 
-            // Add the total bill at the bottom
             message.append("Total Sales ₱").append(totalBill);
 
-            // Show all in one message dialog
             JOptionPane.showMessageDialog(null, message.toString());
 
         } catch (SQLException ex) {

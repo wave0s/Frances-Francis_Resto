@@ -8,6 +8,7 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
     private RestaurantDashboard parentDashboard;
     private JTextField paymentField = new JTextField();
     private Order order;
+    private JLabel change;
    
 
 
@@ -242,7 +243,7 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
         confirmBtn.setFont(new Font("Arial", Font.BOLD, 12));
         confirmBtn.setFocusPainted(false);
         confirmBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-        confirmBtn.addActionListener(e -> confirmOrder(paymentField, order));
+        confirmBtn.addActionListener(e -> confirmOrder(paymentField, order, change));
        
         buttonPanel.add(cancelBtn);
         buttonPanel.add(confirmBtn);
@@ -257,48 +258,74 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
 
 
 
-    private void confirmOrder(JTextField paymentField, Order order) {
-    try{
-        double userPayment = Double.parseDouble(paymentField.getText());
-        double totalAmount = order.getTotal();
-        if (userPayment < totalAmount){
+    private void confirmOrder(JTextField paymentField, Order order, JLabel change) {
+        try{
+            //ari gin change ko
+            if (paymentField.getText().trim().isEmpty()){
+                throw new IllegalArgumentException();
+                
+            }else{ // gin add ko ni and ang next 8 lines
+                String payment = paymentField.getText();
+                if (payment.matches("0\\d+")) {
+                    JOptionPane.showMessageDialog(this,
+                            "Leading zeros are not allowed. Please pay again.",
+                            "Invalid Input",
+                            JOptionPane.WARNING_MESSAGE);
+                    paymentField.setText("");
+                    return;
+                }
+
+                double userPayment = Double.parseDouble(paymentField.getText().trim());
+                double totalAmount = order.getTotal();
+                if(userPayment >= totalAmount){
+                    double userChange = userPayment - totalAmount;
+                    change.setText(String.format("Change: P %.2f", userChange));
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                        "Insufficient Payment Amount. Please pay again.",
+                        "Insufficient Amount.",
+                        JOptionPane.WARNING_MESSAGE);
+                        paymentField.setText("");
+                        return;
+                } 
+            }
+            
+        
+        
+        } catch(NumberFormatException nfe){
             JOptionPane.showMessageDialog(this,
-                "Insufficient Payment Amount. Please pay again.",
-                "Insufficient Amount.",
+                "Special characters and spaces are not allowed. Please enter valid payment amount.",
+                "Invalid Input.",
                 JOptionPane.WARNING_MESSAGE);
                 paymentField.setText("");
                 return;
-        } else if(userPayment >= totalAmount){
-            double userChange = userPayment - totalAmount;
-             JOptionPane.showMessageDialog(this,
-                        "Order completed successfully!\n" +
-                        "Table " + tablePanel.getTableNumber() + " is now available.\n\n" +
-                        String.format("Change: P %.2f", userChange),
-                        "Order Completed",
-                        JOptionPane.INFORMATION_MESSAGE);
+        }catch (IllegalArgumentException e) { // gin add ko ni
+            JOptionPane.showMessageDialog(this,
+                    "Payment Amount Field is empty. Please enter payment amount.",
+                    "Empty Field.",
+                    JOptionPane.WARNING_MESSAGE);
+                    paymentField.setText("");
+                    return;
         }
-    } catch(NumberFormatException nfe){
+
         JOptionPane.showMessageDialog(this,
-            "Invalid input. Please pay again.",
-            "Invalid Input.",
-            JOptionPane.WARNING_MESSAGE);
-            paymentField.setText("");
-            return;
+            "Order completed successfully!\n" +
+            "Table " + tablePanel.getTableNumber() + " is now available.",
+            "Order Completed",
+            JOptionPane.INFORMATION_MESSAGE);
+    
+
+        double userPayment = Double.parseDouble(paymentField.getText());
+        OrderManager.getInstance().completeOrder(tablePanel.getTableNumber(), userPayment);
+        
+        tablePanel.setOccupied(false);
+
+        dispose();
+    
+
+        RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
+        dashboard.updateTableState(tablePanel.getTableNumber(), false);
+        dashboard.setVisible(true);
     }
-
-    
-
-    double userPayment = Double.parseDouble(paymentField.getText());
-    OrderManager.getInstance().completeOrder(tablePanel.getTableNumber(), userPayment);
-    
-    tablePanel.setOccupied(false);
-
-    dispose();
-   
-
-    RestaurantDashboard dashboard = RestaurantDashboard.getInstance();
-    dashboard.updateTableState(tablePanel.getTableNumber(), false);
-    dashboard.setVisible(true);
-}
    
 }
