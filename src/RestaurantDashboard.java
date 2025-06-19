@@ -148,11 +148,15 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setBackground(new Color(166, 135, 99));
-        rightPanel.add(menuManagementButton);
-        rightPanel.add(backToHomeButton);
-        rightPanel.add(checkSales); //added
+        rightPanel.add(backToHomeButton); //added
+
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        leftPanel.setBackground(new Color(166, 135, 99));
+        leftPanel.add(checkSales); //change to left
+        leftPanel.add(menuManagementButton);
 
         footerPanel.add(rightPanel, BorderLayout.EAST);
+        footerPanel.add(leftPanel, BorderLayout.WEST);
 
         return footerPanel;
     }

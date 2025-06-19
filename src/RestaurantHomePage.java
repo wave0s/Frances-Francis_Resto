@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.swing.*;
 
-public class RestaurantHomePage extends JFrame implements RestaurantFrame {
+public class RestaurantHomePage extends JFrame {
     private static RestaurantHomePage instance;
 
     public static RestaurantHomePage getInstance() {
@@ -22,18 +22,18 @@ public class RestaurantHomePage extends JFrame implements RestaurantFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        getContentPane().setBackground(new Color(10, 26, 47));
+        getContentPane().setBackground(new Color(35, 31, 32));
 
         createWelcomeContent();
     }
 
     private void createWelcomeContent() {
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(10, 26, 47));
+        mainPanel.setBackground(new Color(142, 121, 62));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
 
         // Header sec
-        JPanel headerSection = createHeaderPanel();
+        JPanel headerSection = createHeaderSection();
         
         // Welcome msg Sec
         JPanel welcomeSection = createWelcomeSection();
@@ -42,7 +42,7 @@ public class RestaurantHomePage extends JFrame implements RestaurantFrame {
         JPanel buttonSection = createButtonSection();
         
         // Footer sec
-        JPanel footerSection = createFooterPanel();
+        JPanel footerSection = createFooterSection();
 
         mainPanel.add(headerSection, BorderLayout.NORTH);
         mainPanel.add(welcomeSection, BorderLayout.CENTER);
@@ -52,24 +52,23 @@ public class RestaurantHomePage extends JFrame implements RestaurantFrame {
         add(footerSection, BorderLayout.SOUTH);
     }
 
-    @Override
-    public JPanel createHeaderPanel() {
+    private JPanel createHeaderSection() {
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 30));
-        headerPanel.setBackground(new Color(10, 26, 47));
+        headerPanel.setBackground(new Color(35, 31, 32));
 
         ImageIcon logoIcon = createLogoIcon();
         JLabel logoLabel = new JLabel(logoIcon);
 
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.setBackground(new Color(10, 26, 47));
+        textPanel.setBackground(new Color(35, 31, 32));
 
         Font welcomeFont = new Font("SansSerif", Font.BOLD, 48);
         Font restonameFont = new Font("SansSerif", Font.BOLD, 32);
         Font sloganFont = new Font("SansSerif", Font.BOLD, 18);
 
         try {
-            InputStream is = getClass().getResourceAsStream("/fonts/Prisma.ttf");
+            InputStream is = getClass().getResourceAsStream("assets/fonts/Prisma.ttf");
             if (is != null) {
                 Font fontCustom = Font.createFont(Font.TRUETYPE_FONT, is);
                 GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -92,7 +91,7 @@ public class RestaurantHomePage extends JFrame implements RestaurantFrame {
         nameLabel.setForeground(new Color(255, 215, 0));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel sloganLabel = new JLabel("KAON NA KAMO");
+        JLabel sloganLabel = new JLabel("Diri Na!");
         sloganLabel.setFont(sloganFont);
         sloganLabel.setForeground(Color.LIGHT_GRAY);
         sloganLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -112,14 +111,12 @@ public class RestaurantHomePage extends JFrame implements RestaurantFrame {
     private JPanel createWelcomeSection() {
         JPanel welcomePanel = new JPanel();
         welcomePanel.setLayout(new BoxLayout(welcomePanel, BoxLayout.Y_AXIS));
-        welcomePanel.setBackground(new Color(10, 26, 47));
+        welcomePanel.setBackground(new Color(199, 161, 90));
         welcomePanel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 100));
 
         JLabel descriptionLabel = new JLabel("<html><center>" +
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. <br><br>" +
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br>" +
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>" +
-            "Ready?" +
+            "WHERE EVERY FOOD SOLVES YOUR CRAVINGS" +
+            
             "</center></html>");
         descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 20));
         descriptionLabel.setForeground(Color.WHITE);
@@ -135,7 +132,7 @@ public class RestaurantHomePage extends JFrame implements RestaurantFrame {
 
     private JPanel createButtonSection() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 30));
-        buttonPanel.setBackground(new Color(10, 26, 47));
+        buttonPanel.setBackground(new Color(199, 161, 90));
 
         JButton orderNowButton = new JButton("ORDER NOW");
         orderNowButton.setFont(new Font("Arial", Font.BOLD, 24));
@@ -177,8 +174,8 @@ public class RestaurantHomePage extends JFrame implements RestaurantFrame {
 
         return buttonPanel;
     }
-    @Override
-    public JPanel createFooterPanel() {
+
+    private JPanel createFooterSection() {
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(166, 135, 99));
         footerPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
