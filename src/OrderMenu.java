@@ -312,6 +312,7 @@ public class OrderMenu extends JFrame implements RestaurantFrame {
         minusButton.setBackground(new Color(231, 71, 60));
         minusButton.setForeground(Color.BLACK);
         minusButton.setFocusPainted(false);
+        minusButton.setBorder(BorderFactory.createEmptyBorder());
         minusButton.addActionListener(e -> decrementItem(item));
 
 
@@ -321,6 +322,7 @@ public class OrderMenu extends JFrame implements RestaurantFrame {
         plusButton.setBackground(new Color(60, 231, 74));
         plusButton.setForeground(Color.BLACK);
         plusButton.setFocusPainted(false);
+        plusButton.setBorder(BorderFactory.createEmptyBorder());
         plusButton.addActionListener(e -> incrementItem(item));
 
 
