@@ -1,5 +1,10 @@
 package src;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,30 +55,32 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         }
     }
 
-    private JPanel createHeaderPanel() {
+    @Override
+    public JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(45, 45, 45));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("Frances & Francis", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Frances & Francis - Table Management", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
 
-        /*statusLabel = new JLabel("Cookin'");
+        statusLabel = new JLabel("Cookin'");
         statusLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         statusLabel.setForeground(new Color(46, 204, 113));
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setBackground(new Color(45, 45, 45));
         rightPanel.add(statusLabel);
-*/
+
         headerPanel.add(titleLabel, BorderLayout.CENTER);
-        //headerPanel.add(rightPanel, BorderLayout.EAST);
+        headerPanel.add(rightPanel, BorderLayout.EAST);
 
         return headerPanel;
     }
    
-    private JPanel createFooterPanel() {
+    @Override
+    public JPanel createFooterPanel() {
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(166, 135, 99));
         footerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
@@ -96,14 +103,54 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         menuManagementButton.setFocusPainted(false);
         menuManagementButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         menuManagementButton.addActionListener(e -> {
-            this.setVisible(false);
             new MenuManagement().setVisible(true);
         });
+
+        
+        JButton checkSales = new JButton("Total sales");
+        checkSales.setBackground(new Color(155, 89, 182));
+        checkSales.setForeground(Color.BLUE);
+        checkSales.setFont(new Font("Arial", Font.BOLD, 12));
+        checkSales.setFocusPainted(false);
+        checkSales.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        checkSales.addActionListener(e -> {
+        try (Connection conn = Database.getConnection();
+            Statement stmt1 = conn.createStatement();
+            ResultSet rs1 = stmt1.executeQuery("SELECT SUM(totalBill) AS TotalSales FROM restosales");
+            Statement stmt2 = conn.createStatement();
+            ResultSet rs2 = stmt2.executeQuery("SELECT name, totalSales FROM menu_item")) {
+
+            // Get total bill from restosales
+            double totalBill = 0;
+            if (rs1.next()) {
+                totalBill = rs1.getDouble("TotalSales");
+            }
+
+            // Build the list of menu item sales
+            StringBuilder message = new StringBuilder("Item Sales:\n");
+            while (rs2.next()) {
+                String name = rs2.getString("name");
+                double itemSales = rs2.getDouble("totalSales");
+                message.append(name).append(" = ₱").append(itemSales).append("\n");
+            }
+
+            // Add the total bill at the bottom
+            message.append("Total Sales ₱").append(totalBill);
+
+            // Show all in one message dialog
+            JOptionPane.showMessageDialog(null, message.toString());
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Database Error: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    });
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setBackground(new Color(166, 135, 99));
         rightPanel.add(menuManagementButton);
         rightPanel.add(backToHomeButton);
+        rightPanel.add(checkSales); //added
 
         footerPanel.add(rightPanel, BorderLayout.EAST);
 

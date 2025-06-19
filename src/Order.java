@@ -145,10 +145,7 @@ public class Order {
     public boolean isEmpty() {
         return items.isEmpty();
     }
-
-    public void clearItems() {
-    }
-
+    
     public static class OrderItem {
         private String name;
         private double price;

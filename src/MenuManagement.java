@@ -6,7 +6,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
-public class MenuManagement extends JFrame {
+public class MenuManagement extends JFrame implements RestaurantFrame {
     private JTable menuTable;
     private DefaultTableModel tableModel;
     private JTextField nameField;
@@ -22,8 +22,7 @@ public class MenuManagement extends JFrame {
 
     public MenuManagement() {
         setTitle("Menu Management - Frances & Francis");
-        //setSize(900, 700);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setSize(900, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -37,7 +36,8 @@ public class MenuManagement extends JFrame {
         loadMenuItems();
     }
 
-    private void createHeaderPanel() {
+    @Override
+    public JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(45, 45, 45));
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -58,6 +58,8 @@ public class MenuManagement extends JFrame {
         headerPanel.add(rightPanel, BorderLayout.EAST);
 
         add(headerPanel, BorderLayout.NORTH);
+
+        return headerPanel;
     }
 
     private void createMainPanel() {
@@ -208,7 +210,8 @@ public class MenuManagement extends JFrame {
         return formPanel;
     }
 
-    private void createFooterPanel() {
+    @Override
+    public JPanel createFooterPanel() {
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(166, 135, 99));
         footerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -230,6 +233,8 @@ public class MenuManagement extends JFrame {
 
         footerPanel.add(rightPanel, BorderLayout.EAST);
         add(footerPanel, BorderLayout.SOUTH);
+
+        return footerPanel;
     }
 
     private void loadMenuItems() {
@@ -294,7 +299,7 @@ public class MenuManagement extends JFrame {
             categoryCombo.setSelectedItem(selectedItem.getCategory());
             
             addButton.setEnabled(false); // gin add ko ni
-            updateButton.setEnabled(false); // gin change ko ni
+            updateButton.setEnabled(true);
             deleteButton.setEnabled(true);
         } else {
             clearForm();
@@ -353,7 +358,33 @@ public class MenuManagement extends JFrame {
                 double price = Double.parseDouble(priceField.getText().trim());
                 String category = (String) categoryCombo.getSelectedItem();
 
-                boolean success = Database.updateMenuItem(selectedItemId, name, price, category);
+                // Get the current item data to compare for changes
+            MenuItemData currentItem = null;
+            for (MenuItemData item : menuItems) {
+                if (item.getId() == selectedItemId) {
+                    currentItem = item;
+                    break;
+                }
+            }
+
+            // Check if there are any actual changes
+            if (currentItem != null) {
+                boolean hasChanges = !currentItem.getName().equals(name) ||
+                                   Math.abs(currentItem.getPrice() - price) > 0.001 ||
+                                   !currentItem.getCategory().equals(category);
+
+                if (!hasChanges) {
+                    JOptionPane.showMessageDialog(this,
+                        "No changes detected. Please modify the item details before updating.",
+                        "No Changes",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+            }
+
+            boolean success = Database.updateMenuItem(selectedItemId, name, price, category);
+
+                
                 if (success) {
                     JOptionPane.showMessageDialog(this,
                         "Menu item updated successfully!",
@@ -362,7 +393,8 @@ public class MenuManagement extends JFrame {
                     addButton.setEnabled(true); // gin add ko ni
                     loadMenuItems(); 
                     clearForm();
-                } else {
+
+                }else {
                     JOptionPane.showMessageDialog(this,
                         "Failed to update menu item.",
                         "Error",
@@ -423,23 +455,10 @@ public class MenuManagement extends JFrame {
 
 
 
-    /*private boolean validateUpdate() {
-        String name =nameField.getText().trim();
-        String priceText = priceField.getText().trim();
-        String category = (String) categoryCombo.getSelectedItem();
-
-        if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter an item name.",
-                    "Validation Error",
-                    JOptionPane.WARNING_MESSAGE);
-            nameField.requestFocus();
-            return false;
-        }
-    }
 
 
-*/
+
+
 
 
 

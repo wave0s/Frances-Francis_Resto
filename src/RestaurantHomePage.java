@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.swing.*;
 
-public class RestaurantHomePage extends JFrame {
+public class RestaurantHomePage extends JFrame implements RestaurantFrame {
     private static RestaurantHomePage instance;
 
     public static RestaurantHomePage getInstance() {
@@ -33,7 +33,7 @@ public class RestaurantHomePage extends JFrame {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
 
         // Header sec
-        JPanel headerSection = createHeaderSection();
+        JPanel headerSection = createHeaderPanel();
         
         // Welcome msg Sec
         JPanel welcomeSection = createWelcomeSection();
@@ -42,7 +42,7 @@ public class RestaurantHomePage extends JFrame {
         JPanel buttonSection = createButtonSection();
         
         // Footer sec
-        JPanel footerSection = createFooterSection();
+        JPanel footerSection = createFooterPanel();
 
         mainPanel.add(headerSection, BorderLayout.NORTH);
         mainPanel.add(welcomeSection, BorderLayout.CENTER);
@@ -52,7 +52,8 @@ public class RestaurantHomePage extends JFrame {
         add(footerSection, BorderLayout.SOUTH);
     }
 
-    private JPanel createHeaderSection() {
+    @Override
+    public JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 30));
         headerPanel.setBackground(new Color(10, 26, 47));
 
@@ -176,8 +177,8 @@ public class RestaurantHomePage extends JFrame {
 
         return buttonPanel;
     }
-
-    private JPanel createFooterSection() {
+    @Override
+    public JPanel createFooterPanel() {
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(166, 135, 99));
         footerPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));

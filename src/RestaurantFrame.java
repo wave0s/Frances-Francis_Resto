@@ -1,5 +1,8 @@
 package src;
+import javax.swing.JPanel;
+
 public interface RestaurantFrame {
-    void updateTableState(int tableNumber, boolean occupied);
-    void updateStats();
+   
+    JPanel createFooterPanel();
+    JPanel createHeaderPanel();
 }
