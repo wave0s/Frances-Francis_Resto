@@ -531,7 +531,7 @@ public class OrderMenu extends JFrame implements RestaurantFrame {
             if (!orderItems.isEmpty()) {
 
                 int confirm = JOptionPane.showConfirmDialog(this,
-                "Once your order has been placed, it cannot be changed.",
+                "Once your order has been placed, it cannot be changed. Confirm Order?",
                 "Confirm Order",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);

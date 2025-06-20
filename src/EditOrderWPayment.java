@@ -254,6 +254,9 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
         return footerPanel;
     }
 
+
+
+
     private void confirmOrder(JTextField paymentField, Order order, JLabel change) {
         try{
             //ari gin change ko
@@ -277,11 +280,12 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
                     double userChange = userPayment - totalAmount;
                     change.setText(String.format("Change: P %.2f", userChange));
                     JOptionPane.showMessageDialog(this,
-                    "Order completed successfully!\n" +
-                    "Table " + tablePanel.getTableNumber() + " is now available.\n\n" + 
+                    "Order completed successfully!\n" + 
+                    "Table " + tablePanel.getTableNumber() + " is available. \n\n" +
                                 String.format("Change: P %.2f", userChange),
-                            "Order Completed",
+                                "Order Completed",
                     JOptionPane.INFORMATION_MESSAGE);
+
                 } else {
                     JOptionPane.showMessageDialog(this,
                         "Insufficient Payment Amount. Please pay again.",
@@ -291,6 +295,8 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
                         return;
                 } 
             }
+            
+        
         
         } catch(NumberFormatException nfe){
             JOptionPane.showMessageDialog(this,
@@ -307,8 +313,6 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
                     paymentField.setText("");
                     return;
         }
-
-        
     
 
         double userPayment = Double.parseDouble(paymentField.getText());
@@ -323,4 +327,5 @@ public class EditOrderWPayment extends JFrame implements RestaurantFrame{
         dashboard.updateTableState(tablePanel.getTableNumber(), false);
         dashboard.setVisible(true);
     }
+   
 }

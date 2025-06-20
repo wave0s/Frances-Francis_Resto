@@ -45,13 +45,13 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
 
         setLocationRelativeTo(null);
         setResizable(true);
-        updateStats();
+        // updateStats();
     }
 
     public void updateTableState(int tableNumber, boolean occupied) {
         if (tables.containsKey(tableNumber)) {
             tables.get(tableNumber).setOccupied(occupied);
-            updateStats();
+            // updateStats();
         }
     }
 
@@ -65,16 +65,8 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
 
-        statusLabel = new JLabel("Cookin'");
-        statusLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        statusLabel.setForeground(new Color(46, 204, 113));
-
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        rightPanel.setBackground(new Color(45, 45, 45));
-        rightPanel.add(statusLabel);
 
         headerPanel.add(titleLabel, BorderLayout.CENTER);
-        headerPanel.add(rightPanel, BorderLayout.EAST);
 
         return headerPanel;
     }
@@ -196,7 +188,7 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
         });
     }
 
-    public void updateStats() {
+    /* public void updateStats() {
         // Method kept for interface compatibility
     }
 
@@ -210,7 +202,7 @@ public class RestaurantDashboard extends JFrame implements RestaurantFrame {
             RestaurantDashboard dashboard = getInstance();
             dashboard.setVisible(true);
         });
-    }
+    } */
 
     public static void showDashboard() {
         SwingUtilities.invokeLater(() -> {
